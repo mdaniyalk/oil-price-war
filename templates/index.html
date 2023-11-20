@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .modebar-container {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" id="actual-price-title">Actual Price</h5>
+                    <div id="graph1" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" id="forecasted-price-title">Forecasted Price</h5>
+                    <div id="graph2" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Related News Headlines</h5>
+                    <p id="text-field"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function formatDate(timestamp) {
+        const date = new Date(timestamp);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
+    function fetchData() {
+        fetch('/get_data')
+            .then(response => response.json())
+            .then(data => {
+                var actualPrice = {
+                    x: Array.from({ length: data.graph1.length }, (_, i) => new Date().getTime() - (i * 60000)), // Milliseconds ago
+                    y: data.graph1,
+                    mode: 'lines',
+                    name: 'Actual Price'
+                };
+
+                // Limit the forecasted data to the next 60 days
+                var forecastedPrice = {
+                    x: Array.from({ length: 60 }, (_, i) => new Date().getTime() + (i * 60000 * 60 * 24)), // Milliseconds in the future
+                    y: data.graph2.slice(0, 60), // Only take the first 60 data points
+                    mode: 'lines',
+                    name: 'Forecasted Price'
+                };
+
+                var actualLayout = {
+                    displayModeBar: false,
+                    xaxis: {
+                        type: 'date',
+                        tickformat: '%H:%M',
+                        title: 'Time'
+                    },
+                    yaxis: {
+                        title: 'Actual Price'
+                    }
+                };
+
+                var forecastedLayout = {
+                    displayModeBar: false,
+                    xaxis: {
+                        type: 'date',
+                        tickformat: '%d-%m-%Y', // Format for Day-Month-Year
+                        title: 'Date: ' + formatDate(new Date().getTime() + (60000 * 60 * 24 * 1))
+                    },
+                    yaxis: {
+                        title: 'Forecasted Price'
+                    }
+                };
+
+                Plotly.newPlot('graph1', [actualPrice], actualLayout);
+                Plotly.newPlot('graph2', [forecastedPrice], forecastedLayout);
+
+                document.getElementById('text-field').innerText = data.text;
+                var currentPrice = 'Current Price\n' + data.graph1.pop();
+                document.getElementById('actual-price-title').innerText = currentPrice;
+                var forecastedPrice = 'Next 60 Days Forecasted Price\n' + data.graph2.slice(0, 60).pop();
+                document.getElementById('forecasted-price-title').innerText = forecastedPrice;
+                
+            })
+            .catch(error => console.error('Error:', error))
+            .finally(() => setTimeout(fetchData, 60000)); // Poll every 1 minute
+    }
+
+    fetchData(); // Initial fetch
+</script>
+
+</body>
+</html>
