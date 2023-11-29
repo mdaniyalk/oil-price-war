@@ -4,7 +4,7 @@ from threading import Thread
 import time
 from datetime import datetime, timedelta
 import time
-import pickle
+import dill as pickle
 
 
 from etl_module.crawl import *

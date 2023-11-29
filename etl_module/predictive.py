@@ -1,5 +1,5 @@
 import lightgbm as lgb
-import pickle
+import dill as pickle
 import pandas as pd 
 import numpy as np 
 
@@ -19,7 +19,7 @@ def train_model(X, y, filename='predictive'):
     reg.fit(X, y)
 
     with open(f'{filename}.pkl', 'wb') as handle:
-        pickle.dump(reg, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(reg, handle, protocol=pickle.HIGHEST_PROTOCOL, recurse=True)
 
     print(f'New model saved at: {filename}.pkl')
 
