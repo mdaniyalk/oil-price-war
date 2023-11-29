@@ -102,9 +102,9 @@
                 Plotly.newPlot('graph2', [forecastedPrice], forecastedLayout);
 
                 document.getElementById('text-field').innerText = data.text;
-                var currentPrice = 'Current Price\n$' + data.graph1.pop().toFixed(4);
+                var currentPrice = 'Current Price\n$' + data.current_price.toFixed(4);
                 document.getElementById('actual-price-title').innerText = currentPrice;
-                var forecastedPrice = 'Next 30 Days Forecasted Price\n$' + data.graph2.pop().toFixed(4);;
+                var forecastedPrice = 'Next 30 Days Forecasted Price\n$' + data.forecasted_price.toFixed(4);;
                 document.getElementById('forecasted-price-title').innerText = forecastedPrice;
                 
             })

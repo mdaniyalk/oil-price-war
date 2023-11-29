@@ -65,6 +65,8 @@ def get_data():
     return jsonify({
         'graph1': graph1_data,
         'graph2': graph2_data,
+        'current_price': graph1_data[-1],
+        'forecasted_price': graph2_data[-1],
         'text': text_data
     })
 
