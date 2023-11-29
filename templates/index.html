@@ -60,8 +60,8 @@
             .then(response => response.json())
             .then(data => {
                 var actualPrice = {
-                    x: Array.from({ length: data.graph1.length }, (_, i) => new Date().getTime() - (i * 60000)), // Milliseconds ago
-                    y: data.graph1,
+                    x: Array.from({ length: 60 }, (_, i) => new Date().getTime() - ((60-i) * 60000)), // Milliseconds ago
+                    y: data.graph1.slice(0, 60),
                     mode: 'lines',
                     name: 'Actual Price'
                 };
