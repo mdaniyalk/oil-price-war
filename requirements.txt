@@ -4,6 +4,8 @@ newsapi-python==0.2.7
 openai==0.28.0
 Flask-PyMongo
 certifi
-lightgbm
+lightgbm==4.1.0
 numpy
 pandas
+dill==0.3.6
+pickle
