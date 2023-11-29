@@ -2,3 +2,4 @@ Flask
 yfinance==0.2.31
 newsapi-python==0.2.7
 openai==0.28.0
+Flask-PyMongo

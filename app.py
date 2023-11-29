@@ -3,8 +3,14 @@ from random import randint
 from threading import Thread
 import time
 from datetime import datetime, timedelta
+from flask_pymongo import PyMongo
+
 
 app = Flask(__name__)
+app.config['MONGO_URI'] = 'mongodb://localhost:27017/your_database_name'
+mongo = PyMongo(app)
+
+
 
 # Initial data for line graphs
 graph1_data = [randint(0, 10) for _ in range(10)]
