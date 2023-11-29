@@ -66,10 +66,10 @@
                     name: 'Actual Price'
                 };
 
-                // Limit the forecasted data to the next 60 days
+                // Limit the forecasted data to the next 30 days
                 var forecastedPrice = {
-                    x: Array.from({ length: 60 }, (_, i) => new Date().getTime() + (i * 60000 * 60 * 24)), // Milliseconds in the future
-                    y: data.graph2.slice(0, 60), // Only take the first 60 data points
+                    x: Array.from({ length: 30 }, (_, i) => new Date().getTime() + (i * 60000 * 30 * 24)), // Milliseconds in the future
+                    y: data.graph2.slice(0, 30), // Only take the first 30 data points
                     mode: 'lines',
                     name: 'Forecasted Price'
                 };
@@ -91,7 +91,7 @@
                     xaxis: {
                         type: 'date',
                         tickformat: '%d-%m-%Y', // Format for Day-Month-Year
-                        title: 'Date: ' + formatDate(new Date().getTime() + (60000 * 60 * 24 * 1))
+                        title: 'Forecasted Date: ' + formatDate(new Date().getTime() + (60000 * 30 * 24 * 30))
                     },
                     yaxis: {
                         title: 'Forecasted Price'
@@ -102,9 +102,9 @@
                 Plotly.newPlot('graph2', [forecastedPrice], forecastedLayout);
 
                 document.getElementById('text-field').innerText = data.text;
-                var currentPrice = 'Current Price\n' + data.graph1.pop();
+                var currentPrice = 'Current Price\n$' + data.graph1.pop().toFixed(4);
                 document.getElementById('actual-price-title').innerText = currentPrice;
-                var forecastedPrice = 'Next 60 Days Forecasted Price\n' + data.graph2.slice(0, 60).pop();
+                var forecastedPrice = 'Next 30 Days Forecasted Price\n$' + data.graph2.pop().toFixed(4);;
                 document.getElementById('forecasted-price-title').innerText = forecastedPrice;
                 
             })

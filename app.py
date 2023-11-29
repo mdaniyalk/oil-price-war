@@ -3,46 +3,63 @@ from random import randint
 from threading import Thread
 import time
 from datetime import datetime, timedelta
-from flask_pymongo import PyMongo
+import time
+import dill as pickle
+
+
+from etl_module.crawl import *
+from etl_module.mongo import *
+from etl_module.predictive import *
 
 
 app = Flask(__name__)
-app.config['MONGO_URI'] = 'mongodb://localhost:27017/your_database_name'
-mongo = PyMongo(app)
 
 
+with open('predictive.pkl', 'rb') as file:
+    model = pickle.load(file)
+model._n_classes = 1 
 
-# Initial data for line graphs
-graph1_data = [randint(0, 10) for _ in range(10)]
-graph2_data = [randint(0, 10) for _ in range(1440)]  # 1440 data points for 24 hours
+raw_graph1_data = get_historical_price(period='1d', interval="1m")
+graph1_data = [data['close_price'] for data in raw_graph1_data]
+graph1_data = graph1_data[-60:]
 
-# Initial data for text field
-text_data = "Initial Text"
+graph2_data = predict_next_30_days(model).tolist()
+print(graph2_data)
 
-# Function to update data every 1 second
-def update_data():
-    global graph1_data, graph2_data, text_data
+text_data = post_history_news()
+
+
+def update_graph1_data():
+    global graph1_data
     while True:
-        # Simulate updating data for "Actual Price" every 1 minute
-        graph1_data = graph1_data[1:] + [randint(0, 10)]
+        time.sleep(60)
+        graph1_data = graph1_data[1:] + [post_history_price()]
+        
 
-        # Simulate updating data for "Forecasted Price" every 24 hours
-        graph2_data = graph2_data[1:] + [randint(0, 10)]
-        text_data = f"Updated Text: {randint(0, 100)}"
+def update_graph2_data():
+    global graph2_data, text_data
+    while True:
+        time.sleep(60 * 60 * 24)
+        graph2_data = predict_next_30_days(model).tolist()
+        text_data = post_history_news()
+        
 
-        time.sleep(60)  # Sleep for 1 minute
+# Start threads for updating graph1_data and graph2_data
+graph1_update_thread = Thread(target=update_graph1_data)
+graph1_update_thread.daemon = True
+graph1_update_thread.start()
 
-# Start the data update thread
-update_thread = Thread(target=update_data)
-update_thread.daemon = True
-update_thread.start()
+graph2_update_thread = Thread(target=update_graph2_data)
+graph2_update_thread.daemon = True
+graph2_update_thread.start()
 
-# Route for the main dashboard
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# API endpoint for getting updated data
+
 @app.route('/get_data')
 def get_data():
     return jsonify({

@@ -1,10 +1,24 @@
 import yfinance as yf
 import openai
+from tqdm import tqdm
+from datetime import datetime
+from newsapi import NewsApiClient
 
-def get_historical_price(period, 
-                         interval, 
-                         start, 
-                         end):
+
+
+def convert_datetime_format(input_datetime_str):
+    # Parse the input datetime string
+    input_format = "%Y-%m-%dT%H:%M:%SZ"
+    dt_object = datetime.strptime(input_datetime_str, input_format)
+
+    # Convert to the desired format
+    output_format = "%Y-%m-%d"
+    output_datetime_str = dt_object.strftime(output_format)
+
+    return output_datetime_str
+
+
+def get_historical_price(period=None, interval=None, start=None, end=None):
     """
     Parameters:
         period : str
@@ -29,9 +43,23 @@ def get_historical_price(period,
                          end=end)
     dates = data.index.astype(str).to_numpy()
     close_price = data['Close'].to_numpy()
-    historical_data = {'date': dates, 
-                       'close': close_price}
+
+    historical_data = []
+    for i in range(len(dates)):
+        _dates = dates[i]
+        _price = close_price[i]
+        _data = {'timestamp': _dates, 
+                 'close_price': _price}
+        historical_data.append(_data)
     return historical_data
+
+
+def get_last_minutes_price():
+    history = get_historical_price(period="1d", interval="1m")
+    last_datetime = history[-1]['timestamp']
+    last_price = history[-1]['close_price']
+    last_minute_price = {'timestamp': last_datetime, 'close_price': last_price}
+    return last_minute_price
 
 
 
@@ -62,7 +90,7 @@ def get_historical_news(query, sources, domains, start, end, language):
             The 2-letter ISO-639-1 code of the language you want to get headlines for.
             See :data:`newsapi.const.languages` for the set of allowed values.
     """
-    api_key = ''
+    api_key = '0e41d6f152534278bc39b3d29f063454'
     newsapi = NewsApiClient(api_key=api_key)
     result_title = []
     result_description = []
@@ -70,37 +98,59 @@ def get_historical_news(query, sources, domains, start, end, language):
 
 
     for i in range(100):
-        all_articles = newsapi.get_everything(q=query,
-                                              sources=sources,
-                                              domains=domains,
-                                              from_param=start,
-                                              to=end,
-                                              language=language,
-                                              sort_by='relevancy',
-                                              pageSize=100,
-                                              page=i)
-        _title = [article['title'] for article in all_articles['articles']]
-        _description = [article['description'] for article in all_articles['articles']]
-        _date_published = [article['publishedAt'] for article in all_articles['articles']]
-        if len(_title) != 0:
+        try:
+            all_articles = newsapi.get_everything(q=query,
+                                                sources=sources,
+                                                domains=domains,
+                                                from_param=start,
+                                                to=end,
+                                                language=language,
+                                                sort_by='relevancy',
+                                                page=i+1)
+        except:
+            break 
+
+        else:
+            _title = [article['title'] for article in all_articles['articles']]
+            _description = [article['description'] for article in all_articles['articles']]
+            _date_published = [convert_datetime_format(str(article['publishedAt'])) for article in all_articles['articles']]
             result_title += _title
             result_description += _description
             result_date_published += _date_published
-        else:
-            break 
+            print(len(all_articles))
     
-    sentiment = []
+    # sentiment = []
 
-    for i in range(len(result_title)):
-        title = result_title[i]
-        description = result_description[i]
-        combined_article = f"Title: {title}\nDescription: {description}"
+    # for i in tqdm(range(len(result_title))):
+    #     title = result_title[i]
+    #     description = result_description[i]
+    #     combined_article = f"Title: {title}\nDescription: {description}"
+    #     try:
+    #         _sentiment = int(get_sentiment(combined_article))
+    #     except:
+    #         _sentiment = -1
+    #     sentiment.append(_sentiment)
 
     
     news = {'title': result_title, 
             'description': result_description,
-            'date_published' : result_date_published}
-    return news
+            'date_published' : result_date_published,
+            # 'sentiment': sentiment
+            }
+
+    news_data = []
+    for i in range(len(result_title)):
+        _title = result_title[i]
+        _description = result_description[i]
+        _date_published = result_date_published[i]
+        _data = {'title': _title, 
+                 'description': _description,
+                 'date_published' : _date_published,
+                 # 'sentiment': sentiment
+                }
+        news_data.append(_data)
+
+    return news_data
 
 
 def answers_format():
